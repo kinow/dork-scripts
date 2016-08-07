@@ -23,8 +23,7 @@ def main():
 
     with DSStore.open(file_in) as dsfile:
         for elem in dsfile:
-            logging.info("- File [%s] %s bytes" % (elem.filename, elem.byte_length()))
-            print(elem.type)
+            logging.info("- File [%s] %s bytes, %s => [%s]" % (elem.filename, elem.byte_length(), elem.type, elem.value))
 
     logging.info("All done!")
     sys.exit(0)
