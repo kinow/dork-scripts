@@ -2,15 +2,30 @@
 
 import glob, sys, os
 import javalang
+from javalang.tree import IfStatement
 
+from pprint import pprint as pp
 
 def count_ifs(filename):
+	count = 0
 	abs_file_path = os.path.abspath(filename)
 	with open(abs_file_path) as f:
 		tree = javalang.parse.parse(f.read())
+		for class_decl in tree.types:
+			for constructor in class_decl.constructors:
+				statements = constructor.body
+				if statements != None:
+					for statement in statements:
+						if isinstance(statement, IfStatement):
+							count += 1
 
-
-	return 0
+			for method in class_decl.methods:
+				statements = method.body
+				if statements != None:
+					for statement in statements:
+						if isinstance(statement, IfStatement):
+							count += 1
+	return count
 
 def main():
 	"""
