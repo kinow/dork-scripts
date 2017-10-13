@@ -12,7 +12,7 @@ url=""
 USAGE="Usage: `basename $0` [-hv] https://repository.apache.org/.../commons/commons-configuration/2.2/"
 
 # Parse command line options.
-while getopts hvo: OPT; do
+while getopts hv: OPT; do
     case "$OPT" in
         h)
             echo $USAGE
