@@ -1,0 +1,6 @@
+* parse command line arguments
+* report to an HTML file (or iframe with navigation menu)
+* investigate using hunspell instead
+* document how to add entries to dictionary
+* skip Java files like org.apache.commons.Test
+* Fix issue with regex for {@link Code} {@link null}, where it becomes Codenull
