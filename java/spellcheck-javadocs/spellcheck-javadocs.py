@@ -81,9 +81,11 @@ def spellcheck_javadocs(entry):
     #contents = [x for x in contents if has_more_than_one_upper_case_or_camel_case(x) or x in ['.', ',', '-', '|', '']]
     contents = [re.sub('^\*\s*', '', x) for x in contents]
     contents = [re.sub('@param\s+([a-zA-Z0-9_]+)', '', x) for x in contents]
+    contents = [re.sub('@return\s+([a-zA-Z0-9_]+)', '', x) for x in contents]
+    contents = [re.sub('@author\s+([a-zA-Z0-9_]+)', '', x) for x in contents]
     contents = [re.sub('\{@[a-zA-Z]+\s+([^\}]*)\}', r'\1', x) for x in contents]
     soup = BeautifulSoup("<p>%s</p>" % contents, "lxml")
-    contents = ' '.join(soup.findAll(text=True))
+    contents = '\n'.join(soup.findAll(text=True))
     # will create a colored output, and then convert to HTML
     result = subprocess.run(
         ['mwic', '--language', 'en', '--input-encoding', '"ISO-8859-1"', '--camel-case', '--compact', '--suggest', '3', '--output-format', 'color'],
