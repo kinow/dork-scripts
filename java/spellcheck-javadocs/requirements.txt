@@ -1,3 +1,5 @@
 javalang
 pyenchant
 bs4
+tqdm
+tinydb

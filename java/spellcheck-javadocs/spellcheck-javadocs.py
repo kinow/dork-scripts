@@ -22,11 +22,14 @@ import enchant.tokenize
 from bs4 import BeautifulSoup
 # For running mwic
 import subprocess
+# Document store
+from tinydb import TinyDB, Query
 # To convert mwic colored output to HTML
 #from ansi2html import Ansi2HTMLConverter
 
 from pprint import pprint as pp
 
+# For using print with tqdm progress bar in progress...
 class DummyTqdmFile(object):
     """Dummy file-like that will write to tqdm"""
     file = None
@@ -54,70 +57,73 @@ def std_out_err_redirect_tqdm():
     finally:
         sys.stdout, sys.stderr = orig_out_err
 
+# Which files to discard
 REGEXES = [
     re.compile("^Test.*\.java$"),
-    re.compile("^.*Test\.java$")
+    re.compile("^.*Test\.java$"),
+    re.compile("^TS_.*\.java"),
+    re.compile("^IT_.*\.java")
 ]
 
+# Tokenizer
 split_words = None
 try:
     split_words = enchant.tokenize.get_tokenizer("en")
 except enchant.errors.TokenizerNotFoundError:
     split_words = enchant.tokenize.get_tokenizer(None)
 
-def process_javadoc(javadoc):
-    output = ''
-    if javadoc != None and javadoc != '':
-        javadoc = [x.strip(string.punctuation) for x in javadoc.split('\n')]
-        javadoc = [x for x in javadoc if x not in ['/**', '*', '*/']]
-        #javadoc = [x for x in javadoc if has_more_than_one_upper_case_or_camel_case(x) or x in ['.', ',', '-', '|', '']]
-        javadoc = [re.sub('^\*\s*', '', x) for x in javadoc]
-        javadoc = [re.sub('\{@[a-zA-Z]+\s+([^\}]*)\}', r'\1', x) for x in javadoc]
-        soup = BeautifulSoup("<p>%s</p>" % javadoc, "lxml")
-        javadoc = ' '.join(soup.findAll(text=True))
-        # will create a colored output, and then convert to HTML
-        result = subprocess.run(
-            ['mwic', '--language', 'en', '--input-encoding', '"ISO-8859-1"', '--camel-case', '--compact', '--suggest', '3', '--output-format', 'color'],
-            stdout=subprocess.PIPE,
-            input=javadoc.encode('iso-8859-1')
-        )
-        output = result.stdout.decode('iso-8859-1')
-        # if output != None and output != '':
-        #     output = Ansi2HTMLConverter().convert(output)
-    return output
+def spellcheck_javadocs(entry):
+    filename = entry['file_name']
+    contents = entry['text']
 
-def spellcheck_javadocs(filename):
-    tqdm.write("Processing %s" % filename)
+    contents = [x.strip(string.punctuation) for x in contents.split('\n')]
+    contents = [x for x in contents if x not in ['/**', '*', '*/']]
+    #contents = [x for x in contents if has_more_than_one_upper_case_or_camel_case(x) or x in ['.', ',', '-', '|', '']]
+    contents = [re.sub('^\*\s*', '', x) for x in contents]
+    contents = [re.sub('@param\s+([a-zA-Z0-9_]+)', '', x) for x in contents]
+    contents = [re.sub('\{@[a-zA-Z]+\s+([^\}]*)\}', r'\1', x) for x in contents]
+    soup = BeautifulSoup("<p>%s</p>" % contents, "lxml")
+    contents = ' '.join(soup.findAll(text=True))
+    # will create a colored output, and then convert to HTML
+    result = subprocess.run(
+        ['mwic', '--language', 'en', '--input-encoding', '"ISO-8859-1"', '--camel-case', '--compact', '--suggest', '3', '--output-format', 'color'],
+        stdout=subprocess.PIPE,
+        input=contents.encode('iso-8859-1')
+    )
+    output = result.stdout.decode('iso-8859-1')
+    # output = Ansi2HTMLConverter().convert(output)
+    if output != None and output != '':
+        print(output)
+        print("File: %s" % filename)
+        input("Press Enter to continue...")
+    
+
+def add_javadoc(javadoc, contents):
+    if javadoc != None and javadoc != '':
+        contents.append(javadoc)
+
+def load_file_contents(filename, db):
     abs_file_path = os.path.abspath(filename)
     with open(abs_file_path) as f:
         tree = javalang.parse.parse(f.read())
-        reports = []
-
+        contents = []
         for class_decl in tree.types:
-            class_name = class_decl.name
-            javadoc = class_decl.documentation
-            output = process_javadoc(javadoc)
-            if output != None and output != '':
-                reports.append(output)
+            #class_name = class_decl.name
+            add_javadoc(class_decl.documentation, contents)
             for constructor in class_decl.constructors:
-                javadoc = constructor.documentation
-                output = process_javadoc(javadoc)
-                if output != None and output != '':
-                    reports.append(output)
-
+                add_javadoc(constructor.documentation, contents)
+                
             for method in class_decl.methods:
-                javadoc = method.documentation
-                output = process_javadoc(javadoc)
-                if output != None and output != '':
-                    reports.append(output)
-        if len(reports) > 0:
-            print('\n'.join(reports))
-            print("File: %s" % filename)
-            input("Press Enter to continue...")
-            print("\n\n\033[92m========================================\033[0m\n\n")
+                add_javadoc(method.documentation, contents)
+
+            if len(contents) < 1:
+                continue
+            file_contents = '\n'.join(contents)
+            db.insert({'file_name': abs_file_path, 'text': file_contents})
 
 def main():
     files = []
+    db_location = '/tmp/spell.json'
     for filename in glob.iglob("**/*.java", recursive=True):
         basename = os.path.basename(filename)
         if any(regex.match(basename) for regex in REGEXES):
@@ -125,16 +131,34 @@ def main():
             continue
         files.append(filename)
 
+    total_files = len(files)
+
     with std_out_err_redirect_tqdm() as orig_stdout:
-        pbar = tqdm(total=len(files), file=orig_stdout, dynamic_ncols=True)
-        for filename in files:
+        db_exists = os.path.isfile(db_location)
+        db = TinyDB(db_location)
+        if not db_exists:
+            db = TinyDB(db_location)
+            print("Loading %d files" % total_files)
+            pbar = tqdm(total=total_files, file=orig_stdout, dynamic_ncols=True)
+            for filename in files:
+                try:
+                    load_file_contents(filename, db)
+                    pbar.update(1)
+                except Exception as e:
+                    print(e)
+                    pbar.update(1)
+            print("Database created and loaded!")
+            pbar.close()
+
+        total_files = len(db)
+        print("Spell Checking %d entries in the document database" % total_files)
+        pbar = tqdm(total=total_files, file=orig_stdout, dynamic_ncols=True)
+        for entry in db:
             try:
-                spellcheck_javadocs(filename)
+                spellcheck_javadocs(entry)
                 pbar.update(1)
             except Exception as e:
-                #print("Unexpected error parsing [%s]: %s" % (filename, sys.exc_info()[0]))
-                pp(e)
-                #sys.exit(1)
+                print(e)
                 pbar.update(1)
         pbar.close()
 
