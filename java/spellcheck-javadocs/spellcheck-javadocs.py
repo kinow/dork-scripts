@@ -1,6 +1,16 @@
 #!/usr/bin/env python3
 
+"""
+Recursively iterates the given path, looking for .java files. For
+each file found, it parses the javadoc, and spell checks it, producing
+an HTML file with the final report.
+"""
+
 import glob, sys, os
+# For displaying the overall progress
+from tqdm import tqdm
+import contextlib
+from time import sleep
 # For parsing Java files
 import javalang
 # For cleaning up text
@@ -17,6 +27,38 @@ import subprocess
 
 from pprint import pprint as pp
 
+class DummyTqdmFile(object):
+    """Dummy file-like that will write to tqdm"""
+    file = None
+    def __init__(self, file):
+        self.file = file
+
+    def write(self, x):
+        # Avoid print() second call (useless \n)
+        if len(x.rstrip()) > 0:
+            tqdm.write(x, file=self.file)
+
+    def flush(self):
+        return getattr(self.file, "flush", lambda: None)()
+
+@contextlib.contextmanager
+def std_out_err_redirect_tqdm():
+    orig_out_err = sys.stdout, sys.stderr
+    try:
+        sys.stdout, sys.stderr = map(DummyTqdmFile, orig_out_err)
+        yield orig_out_err[0]
+    # Relay exceptions
+    except Exception as exc:
+        raise exc
+    # Always restore sys.stdout/err if necessary
+    finally:
+        sys.stdout, sys.stderr = orig_out_err
+
+REGEXES = [
+    re.compile("^Test.*\.java$"),
+    re.compile("^.*Test\.java$")
+]
+
 split_words = None
 try:
     split_words = enchant.tokenize.get_tokenizer("en")
@@ -30,12 +72,12 @@ def process_javadoc(javadoc):
         javadoc = [x for x in javadoc if x not in ['/**', '*', '*/']]
         #javadoc = [x for x in javadoc if has_more_than_one_upper_case_or_camel_case(x) or x in ['.', ',', '-', '|', '']]
         javadoc = [re.sub('^\*\s*', '', x) for x in javadoc]
-        javadoc = [re.sub('\{@[a-zA-Z]+\s+(.*)\}', r'\1', x) for x in javadoc]
+        javadoc = [re.sub('\{@[a-zA-Z]+\s+([^\}]*)\}', r'\1', x) for x in javadoc]
         soup = BeautifulSoup("<p>%s</p>" % javadoc, "lxml")
-        javadoc = ''.join(soup.findAll(text=True))
+        javadoc = ' '.join(soup.findAll(text=True))
         # will create a colored output, and then convert to HTML
         result = subprocess.run(
-            ['mwic', '--language', 'en', '--input-encoding', '"ISO-8859-1"', '--compact', '--suggest', '3', '--output-format', 'color'],
+            ['mwic', '--language', 'en', '--input-encoding', '"ISO-8859-1"', '--camel-case', '--compact', '--suggest', '3', '--output-format', 'color'],
             stdout=subprocess.PIPE,
             input=javadoc.encode('iso-8859-1')
         )
@@ -45,10 +87,9 @@ def process_javadoc(javadoc):
     return output
 
 def spellcheck_javadocs(filename):
-    print("Processing %s" % filename)
+    tqdm.write("Processing %s" % filename)
     abs_file_path = os.path.abspath(filename)
     with open(abs_file_path) as f:
-
         tree = javalang.parse.parse(f.read())
         reports = []
 
@@ -58,27 +99,6 @@ def spellcheck_javadocs(filename):
             output = process_javadoc(javadoc)
             if output != None and output != '':
                 reports.append(output)
-            # if javadoc != None:
-            #     javadoc = [x.strip(string.punctuation) for x in javadoc.split('\n')]
-            #     javadoc = [x for x in javadoc if x not in ['/**', '*', '*/']]
-            #     javadoc = [x for x in javadoc if has_more_than_one_upper_case(x) or x in ['.', ',', '-', '|', '']]
-            #     javadoc = [re.sub('^\*\s*', '', x) for x in javadoc]
-            #     javadoc = [re.sub('\{@[a-zA-Z]+\s+(.*)\}', r'\1', x) for x in javadoc]
-            #     soup = BeautifulSoup("<p>%s</p>" % javadoc, "lxml")
-            #     javadoc = ''.join(soup.findAll(text=True))
-            #     # will create a colored output, and then convert to HTML
-            #     result = subprocess.run(
-            #         ['mwic', '--language', 'en', '--input-encoding', '"ISO-8859-1"', '--compact', '--suggest', '3', '--output-format', 'color'],
-            #         stdout=subprocess.PIPE,
-            #         input=javadoc.encode('iso-8859-1')
-            #     )
-            #     output = result.stdout.decode('iso-8859-1')
-            #     if output != None and output != '':
-            #         output = Ansi2HTMLConverter().convert(output)
-            #         print("writing files to %s" % "/tmp/output")
-            #         dest_file = os.path.join("/tmp/output", class_name + '.html')
-            #         with open(dest_file, 'w') as f:
-            #             f.write(output)
             for constructor in class_decl.constructors:
                 javadoc = constructor.documentation
                 output = process_javadoc(javadoc)
@@ -91,35 +111,32 @@ def spellcheck_javadocs(filename):
                 if output != None and output != '':
                     reports.append(output)
         if len(reports) > 0:
-            # dest_file = os.path.join("/tmp/output", class_name + '.html')
-            # with open(dest_file, 'w') as f:
-            #     f.write(''.join(reports))
             print('\n'.join(reports))
             print("File: %s" % filename)
             input("Press Enter to continue...")
-            print("\n\n========================================\n\n")
+            print("\n\n\033[92m========================================\033[0m\n\n")
 
 def main():
-    """
-    Recursively iterates the given path, looking for .java files. For
-    each file found, it parses the javadoc, and spell checks it, producing
-    an HTML file with the final report.
-    """
-
-    count_filter = 0
-
+    files = []
     for filename in glob.iglob("**/*.java", recursive=True):
-        try:
-            if filename.endswith('Test.java'):
-                continue
-            spellcheck_javadocs(filename)
-            count_filter += 1
-        except Exception as e:
-            print("Unexpected error parsing [%s]: %s" % (filename, sys.exc_info()[0]))
-            pp(e)
-            sys.exit(1)
+        basename = os.path.basename(filename)
+        if any(regex.match(basename) for regex in REGEXES):
+            #print("Ignoring %s" % filename)
+            continue
+        files.append(filename)
 
-    print("Processed %d files!" % count_filter)
+    with std_out_err_redirect_tqdm() as orig_stdout:
+        pbar = tqdm(total=len(files), file=orig_stdout, dynamic_ncols=True)
+        for filename in files:
+            try:
+                spellcheck_javadocs(filename)
+                pbar.update(1)
+            except Exception as e:
+                #print("Unexpected error parsing [%s]: %s" % (filename, sys.exc_info()[0]))
+                pp(e)
+                #sys.exit(1)
+                pbar.update(1)
+        pbar.close()
 
     sys.exit(0)
 
