@@ -12,14 +12,14 @@ url=""
 USAGE="Usage: `basename $0` [-hv] https://repository.apache.org/.../commons/commons-configuration/2.2/"
 
 # Parse command line options.
-while getopts hv: OPT; do
+while getopts hvo: OPT; do
     case "$OPT" in
         h)
             echo $USAGE
             exit 0
             ;;
         v)
-            echo "`basename $0` version 0.0.1"
+            echo "`basename $0` version 0.0.2"
             exit 0
             ;;
         \?)
@@ -54,6 +54,11 @@ echo "build dir: ${BUILD_DIR}"
 
 # Download KEYS file
 KEYS_URL=https://www.apache.org/dist/commons/KEYS
+#KEYS_URL=https://dist.apache.org/repos/dist/release/incubator/commonsrdf/KEYS
+
+if [ $# -eq 2 ]; then
+    KEYS_URL=$2
+fi
 
 echo "importing KEYS from: ${KEYS_URL}"
 
@@ -62,11 +67,11 @@ gpg --import KEYS
 
 # Download JARs and signature files
 
-echo "downloading all jars and signature files..."
+echo "downloading all source/binary and signature files..."
 
 wget -r -nd -np -e robots=off --wait 1 -R "index.html*" "${URL}"
 
 # Check the files
-for x in *.jar; do gpg --verify "${x}".asc; done
+for x in *.{jar,gz,zip,war,ear,tar}; do gpg --verify "${x}".asc; done
 
 # EOF
