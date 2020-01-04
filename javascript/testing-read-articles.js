@@ -4,7 +4,7 @@
 // @version      0.1
 // @description  try to take over the world!
 // @author       You
-// @match        https://localhost:8080/crawled/news/nz/*
+// @match        https://localhost:8080/crawled/news/oceania1/*
 // @grant        none
 // ==/UserScript==
 
@@ -34,16 +34,22 @@
         }
     }
 
+    function fixText (collection) {
+        for (var i = 0; i < collection.length ; i++) {
+            var elem = collection.item(i)
+            elem.style.display = 'inherit'
+            elem.style.opacity = 100
+            elem.style.color = '#000000'
+        }
+    }
     // Article?
     var article = document.getElementById('article-content')
     if (article !== null) {
         article.className = ""
-        var children = article.getElementsByTagName('div')
-        for (var i = 0; i < children.length ; i++) {
-            var elem = children.item(i)
-            elem.style.display = 'inherit'
-            elem.style.opacity = 100
-        }
+        var collection1 = article.getElementsByTagName('div')
+        fixText(collection1)
+        var collection2 = article.getElementsByTagName('span')
+        fixText(collection2)
         var articleImages = document.getElementsByClassName('article-main').item(0).getElementsByTagName('img')
         fixImages(articleImages)
     } else {
