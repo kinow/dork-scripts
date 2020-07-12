@@ -50,6 +50,8 @@
         fixText(collection1)
         var collection2 = article.getElementsByTagName('span')
         fixText(collection2)
+        var collection3 = article.getElementsByTagName('p')
+        fixText(collection3)
         var articleImages = document.getElementsByClassName('article-main').item(0).getElementsByTagName('img')
         fixImages(articleImages)
     } else {
