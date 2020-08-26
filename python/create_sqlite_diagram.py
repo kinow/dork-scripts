@@ -9,7 +9,7 @@ import tempfile
 sys.path.append("/home/kinow/Development/python/workspace/cylc/lib/")
 from eralchemy import render_er
 
-from cylc.rundb import CylcSuiteDAO
+from cylc.flow.rundb import CylcSuiteDAO
 
 
 def main():
