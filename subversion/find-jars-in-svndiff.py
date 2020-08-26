@@ -1,6 +1,8 @@
 #/usr/bin/env python3
 
-import os, sys, re
+import re
+import sys
+
 from prettytable import PrettyTable
 
 artifact_regex = re.compile(r"^index: (.*\.jar)(.*)", flags=re.IGNORECASE)

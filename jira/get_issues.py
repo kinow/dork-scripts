@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 from jira import JIRA
-import json
 
 JIRA_URL='https://issues.apache.org/jira/'
 jira = JIRA(JIRA_URL)

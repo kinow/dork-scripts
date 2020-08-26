@@ -4,15 +4,16 @@
 # Found a .DS_Store in one of the servers from $work, but not a Mac user... so what's
 # inside that file anyway?
 
-import sys
 import argparse
+import sys
+
 from ds_store import DSStore
 
 parser = argparse.ArgumentParser(description='See inside a .DS_Store file')
 parser.add_argument('--file', help='File absolute location', required=True)
 
 import logging
-from pprint import pprint
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 
 def main():

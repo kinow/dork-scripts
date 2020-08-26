@@ -2,8 +2,9 @@
 
 # requirements: javalang
 
-import os, re, sys
-from pprint import pprint as pp
+import os
+import re
+import sys
 
 import javalang
 

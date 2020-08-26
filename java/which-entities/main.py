@@ -2,11 +2,13 @@
 
 # requirements: javalang, tabulate
 
-import os, sys, glob
-from pprint import pprint as pp
+import glob
+import os
+import sys
 
 import javalang
 from tabulate import tabulate
+
 
 def find_entity(filename):
     """

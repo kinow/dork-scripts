@@ -6,28 +6,30 @@ each file found, it parses the javadoc, and spell checks it, producing
 an HTML file with the final report.
 """
 
-import glob, sys, os
-# For displaying the overall progress
-from tqdm import tqdm
 import contextlib
-from time import sleep
-# For parsing Java files
-import javalang
+import glob
+import os
 # For cleaning up text
 import re
 import string
-# For sentence tokenizing
-import enchant.tokenize
-# For HTML clean-up
-from bs4 import BeautifulSoup
 # For running mwic
 import subprocess
+import sys
+
+# For sentence tokenizing
+import enchant.tokenize
+# For parsing Java files
+import javalang
+# For HTML clean-up
+from bs4 import BeautifulSoup
 # Document store
-from tinydb import TinyDB, Query
+from tinydb import TinyDB
+# For displaying the overall progress
+from tqdm import tqdm
+
+
 # To convert mwic colored output to HTML
 #from ansi2html import Ansi2HTMLConverter
-
-from pprint import pprint as pp
 
 # For using print with tqdm progress bar in progress...
 class DummyTqdmFile(object):
