@@ -2,12 +2,10 @@
 # coding=utf-8
 
 
-import sys
 import tempfile
 
-from eralchemy import render_er
-
 from cylc.flow.rundb import CylcSuiteDAO
+from eralchemy import render_er
 
 
 def main():
