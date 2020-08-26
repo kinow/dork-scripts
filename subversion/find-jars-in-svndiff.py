@@ -12,7 +12,7 @@ t = PrettyTable(['Status', 'Artifact', 'Version', 'Action'])
 def is_num(char):
     r = False
     try:
-        val = int(char)
+        int(char)
         r = True
     except ValueError:
         pass

@@ -48,7 +48,7 @@ def main():
     """
     # From: https://stackoverflow.com/questions/7165749/open-file-in-a-relative-location-in-python
     script_dir         = os.path.dirname(__file__)
-    abs_file_path     = os.path.join(script_dir, 'class.txt')
+    # abs_file_path     = os.path.join(script_dir, 'class.txt')
 
     #table_class = dict()
     table_class = list()
