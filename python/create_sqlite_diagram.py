@@ -5,8 +5,6 @@
 import sys
 import tempfile
 
-# hack until setup.py is done and we are installing it via pip/setuptools
-sys.path.append("/home/kinow/Development/python/workspace/cylc/lib/")
 from eralchemy import render_er
 
 from cylc.flow.rundb import CylcSuiteDAO
