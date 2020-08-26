@@ -75,7 +75,7 @@ class EntityParser(Parser):
 		for line in class_file:
 			line = line.strip()
 			result = self.filter_line(line, ENTITY_FILTER_PATTERNS)
-			if result != None:
+			if result is not None:
 				entity_contents.append(result)
 
 		content = '\n'.join(entity_contents)
@@ -98,7 +98,7 @@ class DtoParser(Parser):
 		for line in class_file:
 			line = line.strip()
 			result = self.filter_line(line, DTO_FILTER_PATTERNS)
-			if result != None:
+			if result is not None:
 				dto_contents.append(result)
 
 		initial_content = '\n'.join(dto_contents)
@@ -121,7 +121,7 @@ class DtoParser(Parser):
 		for ann in class_decl.annotations:
 			annotation = '@'+ann.name+'('
 			elems_values = []
-			if ann.element != None:
+			if ann.element is not None:
 				if type(ann.element) is javalang.tree.MemberReference:
 					elems_values.append(ann.element.qualifier + '.' + ann.element.member)
 				else:
@@ -150,7 +150,7 @@ class DtoParser(Parser):
 				if m:
 					annotation = '@'+ann.name+'('
 					elems_values = []
-					if ann.element != None:
+					if ann.element is not None:
 						if type(ann.element) is javalang.tree.MemberReference:
 							elems_values.append(ann.element.qualifier + '.' + ann.element.member)
 						else:

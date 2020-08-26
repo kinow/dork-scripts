@@ -94,14 +94,14 @@ def spellcheck_javadocs(entry):
     )
     output = result.stdout.decode('iso-8859-1')
     # output = Ansi2HTMLConverter().convert(output)
-    if output != None and output != '':
+    if output is not None and output != '':
         print(output)
         print("File: %s" % filename)
         input("Press Enter to continue...")
     
 
 def add_javadoc(javadoc, contents):
-    if javadoc != None and javadoc != '':
+    if javadoc is not None and javadoc != '':
         contents.append(javadoc)
 
 def load_file_contents(filename, db):

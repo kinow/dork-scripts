@@ -14,14 +14,14 @@ def count_ifs(filename):
 		for class_decl in tree.types:
 			for constructor in class_decl.constructors:
 				statements = constructor.body
-				if statements != None:
+				if statements is not None:
 					for statement in statements:
 						if isinstance(statement, IfStatement):
 							count += 1
 
 			for method in class_decl.methods:
 				statements = method.body
-				if statements != None:
+				if statements is not None:
 					for statement in statements:
 						if isinstance(statement, IfStatement):
 							count += 1
