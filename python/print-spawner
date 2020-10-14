@@ -1,0 +1,21 @@
+#!/usr/bin/env python3
+
+"""
+A simple test spawner, that won't spawn anything, nor pass the
+initialization in JupyterHub, but will print arguments passed
+and the environment variables available for a spawner.
+"""
+
+import sys
+import os
+
+
+if __name__ == '__main__':
+    print('--- Args ---')
+    print(sys.argv[1:])
+
+    print('--- Env ---')
+    for k, v in os.environ.items():
+        print(f'{k}={v}')
+
+sys.exit(0)
