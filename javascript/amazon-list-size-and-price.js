@@ -1,5 +1,6 @@
 // Just until Amazon adds a clear size and total cost to the lists.
 // First scroll all the way down, then use this script.
+// TODO: maybe split priceText by spaces, pick the first (fix euro).
 var priceElements = [...document.querySelectorAll('span.a-price')]
 var totalPrice = priceElements
   .map(
