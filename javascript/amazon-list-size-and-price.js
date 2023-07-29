@@ -1,7 +1,7 @@
 // Just until Amazon adds a clear size and total cost to the lists.
 // First scroll all the way down, then use this script.
 // TODO: maybe split priceText by spaces, pick the first (fix euro).
-var priceElements = [...document.querySelectorAll('span.a-price')]
+var priceElements = [...document.querySelectorAll('.a-row > * > div.price-section > span.a-price')]
 var totalPrice = priceElements
   .map(
     e => {
@@ -11,7 +11,9 @@ var totalPrice = priceElements
         .replace('€', '')
         .replace('.', ',')
         .trim()
-      return parseFloat(price)
+      if (price !== "")
+        return parseFloat(price)
+      return 0.0
     }
   )
   .reduce((accum, val) => {
