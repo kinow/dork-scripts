@@ -1,3 +1,5 @@
+# Ref: https://docs.xfce.org/xfce/thunar/4.14/custom-actions
+#
 # 1. Open Thunar
 # 2. Select "Edit" / "Configure custom actions..."
 # 3. Enter the name "WebP to PNG"
