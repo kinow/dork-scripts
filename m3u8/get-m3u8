@@ -37,9 +37,9 @@ function download-playlist() {
             ((counter++));
         fi;
     done < "$1";
-    ffmpeg -f concat -safe 0 -i ./files.txt -codec copy "${output_file}"
+    ffmpeg -f concat -safe 0 -i ./files.txt -codec copy output.mp4
     popd || exit 2
-    mv "${workdir}/${output_file}" .
+    mv "${workdir}/output.mp4" "${output_file}"
     export WORKDIR="${workdir}"
 }
 
